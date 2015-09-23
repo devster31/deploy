@@ -25,7 +25,7 @@ env.dotenv_path = '/home/me/webapps/myapp/myapp/.env'
 code_dir = '/var/www/deploy-stage'
 app_dir = '/var/www/application'
 repo = 'git@github.com:Servers-for-Hackers/deploy-ex.git'
-timestamp = "release_%s" % time.strftime('%d-%m-%Y_%H:%M', time.gmtime())
+timestamp = time.strftime('%d-%m-%Y_%H:%M', time.gmtime())
 
 
 @task
@@ -103,12 +103,12 @@ def run_composer():
 
 
 def update_permissions():
-    with cd("%s/%s" % (code_dir, timestamp)):
+    with cd("%s/releases/%s" % (code_dir, timestamp)):
         run("chgrp -R www-data .")
         run("chmod -R ug+rwx .")
 
 
 def update_symlinks():
     with cd(code_dir):
-        run("ln -nfs %s %s" % (code_dir+'/'+timestamp, app_dir))
+        run("ln -nfs %s %s" % (code_dir+'/releases/'+timestamp, app_dir))
         run("chgrp -h www-data %s" % app_dir)
