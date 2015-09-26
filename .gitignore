@@ -1,5 +1,8 @@
-.env
+*.sublime*
+.DS_Store
 .idea
+
+.env
 .vagrant
 *.pyc
 venv/
