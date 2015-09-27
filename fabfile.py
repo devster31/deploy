@@ -7,7 +7,7 @@ from StringIO import StringIO
 import time
 from os.path import join, dirname
 from dotenv import load_dotenv, parse_dotenv
-from fabric.api import env, run, task
+from fabric.api import env, run, task, settings, sudo, parallel
 from fabric.context_managers import cd, settings
 from fabric.operations import put, get
 
@@ -15,6 +15,12 @@ __status__ = "testing"
 
 env_file = join(dirname(__file__), '.env')
 load_dotenv(env_file)
+
+# Server user, normally AWS Ubuntu instances have default user "ubuntu"
+env.user      = "ubuntu"
+
+# List of AWS private key Files
+env.key_filename = ["~/.ssh/mykeypair_1.pem", "~/.ssh/mykeypair_2.pem"]
 
 local_vagrant = 'vagrant@192.168.200.200'
 # absolute path to the location of .env on remote server
@@ -112,3 +118,63 @@ def update_symlinks():
     with cd(code_dir):
         run("ln -nfs %s %s" % (code_dir+'/releases/'+timestamp, app_dir))
         run("chgrp -h www-data %s" % app_dir)
+
+
+# Fabric task to restart Apache, runs in parallel
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 restart_apache
+@parallel
+def reload_apache():
+    sudo('service apache restart')
+
+
+# Fabric task to start Apache, runs in parallel
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 start_apache
+@parallel
+def start_apache():
+    sudo('service apache start')
+
+
+# Fabric task to stop Apache, runs in parallel
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 stop_apache
+@parallel
+def stop_apache():
+    sudo('service apache stop')
+
+
+# Fabric task to updates/upgrade OS (Ubuntu), runs in parallel
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 update_os
+@parallel
+def update_os():
+    sudo('apt-get update -y')
+    sudo('apt-get upgrade -y')
+
+
+# Fabric task to reboot OS (Ubuntu), runs in parallel
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 reboot_os
+@parallel
+def reboot_os():
+    sudo('reboot')
+
+
+# Fabric task for cloning GIT repository in Apache WEB_ROOT
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 update_branch restart_apache
+@parallel
+def clone_branch():
+    with cd("/var/www"):
+        run('git clone https://www.github.com/user/repo.git')
+
+
+# Fabric task for deploying latest changes using GIT pull
+# This assumes that your GIT repository is in Apache WEB_ROOT
+# To execute task using fabric run following
+# fab set_hosts:phpapp,2X,us-west-1 update_branch restart_apache
+@parallel
+def update_branch():
+    with cd("/var/www"):
+        run('git pull -f')
