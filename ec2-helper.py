@@ -41,10 +41,10 @@ Sample Usage:
 
 class EC2TagManager:
     def __init__(self, aws_access_key_id=None, aws_secret_access_key=None, regions=None, common_tags=None):
-        """ This class helps find instances with a particular set of tags.
-        
-            If access key/secret are not given, they must be available as environment
-            variables so boto can access them.
+        """
+        This class helps find instances with a particular set of tags.
+        If access key/secret are not given, they must be available as environment
+        variables so boto can access them.
         """
         self.aws_access_key_id = aws_access_key_id
         self.aws_secret_access_key = aws_secret_access_key
@@ -59,9 +59,9 @@ class EC2TagManager:
                                                       aws_secret_access_key=self.aws_secret_access_key)
 
     def _build_tag_filter(self, tags):
-        """ Convert a dict in to a tag filter.
-        
-            Given a dict {'key': 'val'}, return {'tag:key': 'val'}.
+        """
+        Convert a dict in to a tag filter.
+        Given a dict {'key': 'val'}, return {'tag:key': 'val'}.
         """
         tag_filter = {}
         for k, v in tags.iteritems():
@@ -69,10 +69,11 @@ class EC2TagManager:
         return tag_filter
 
     def get_instances(self, instance_attr='public_dns_name', only_running=True, **kwargs):
-        """ Return instances that match the given tags.
-            Keyword arguments:
-            instance_attr -- attribute of instance(s) to return (default public_dns_name)
-            Additional arguments are used to generate tag filter e.g. "get_instances(role='test')
+        """
+        Return instances that match the given tags.
+        Keyword arguments:
+        instance_attr -- attribute of instance(s) to return (default public_dns_name)
+        Additional arguments are used to generate tag filter e.g. "get_instances(role='test')
         """
         if not instance_attr:
             raise ValueError('instance_attr cannot be None or empty' % instance_attr)
@@ -99,3 +100,12 @@ class EC2TagManager:
                     else:
                         raise ValueError('%s is not an attribute of instance' % instance_attr)
         return hosts
+def _get_public_dns(region, key, value ="*"):
+    public_dns   = []
+    connection   = _create_connection(region)
+    reservations = connection.get_all_instances(filters = {key : value})
+    for reservation in reservations:
+        for instance in reservation.instances:
+            print "Instance", instance.public_dns_name
+            public_dns.append(str(instance.public_dns_name))
+    return public_dns
